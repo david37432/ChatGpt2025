@@ -1,15 +1,58 @@
-import React from "react";
-import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from "react-native";
+import { useRouter } from "expo-router";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../utils/FirebaseConfig"; // Asegúrate de importar correctamente tu configuración de Firebase
 
-const Dashboard = () => {
+interface Conversation {
+  id: string;
+  title: string;
+  messages: string[];
+}
+
+const Dashboard: React.FC = () => {
+  const router = useRouter();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "conversations")); // Nombre de la colección en Firestore
+        const data: Conversation[] = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Conversation[];
+        setConversations(data);
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+      }
+    };
+
+    fetchConversations();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Encabezado */}
-      <TouchableOpacity style={styles.header}>
+      <TouchableOpacity style={styles.header} onPress={() => router.push("/empyConversation")}>
         <Image source={require("../assets/images/mensaje.png")} style={styles.chatIcon} />
         <Text style={styles.headerText}>New Chat</Text>
         <Image source={require("../assets/images/ir2.png")} style={styles.arrowIcon} />
       </TouchableOpacity>
+
+      {/* Historial de conversaciones */}
+      <FlatList
+        data={conversations}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.historyItem}
+            onPress={() => router.push({ pathname: `/conversation/${item.id}`, params: { messages: JSON.stringify(item.messages) } })}
+          >
+            <Text style={styles.historyText}>{item.title}</Text>
+          </TouchableOpacity>
+        )}
+      />
 
       {/* Opciones del menú */}
       <View style={styles.menu}>
@@ -74,6 +117,15 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     tintColor: "#FFFFFF",
+  },
+  historyItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  historyText: {
+    color: "#FFFFFF",
+    fontSize: 16,
   },
   menu: {
     marginTop: 10,

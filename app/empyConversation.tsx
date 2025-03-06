@@ -14,13 +14,14 @@ const ChatScreen = () => {
         if (!message.trim()) return; // Evitar enviar mensajes vacíos
 
         const newMessage: Message = {
-          idts: Date.now().toString(),  // Genera un ID único basado en el tiempo
+          idts: Date.now().toString(),
           text: message,
           sender: "user",
-          fecha: new Date().toISOString(), // Fecha en formato ISO
-          emisor: "Usuario",  // Puedes cambiarlo si tienes un sistema de autenticación
-          message: message,  // Si `message` es redundante con `text`, considera modificar la interfaz
-      };
+          fecha: new Date().toISOString(),
+          emisor: "Usuario",
+          message: message,
+        };
+
         setMessages(prevMessages => [...prevMessages, newMessage]);
         setMessage(""); // Limpiar el input después de enviar
 
@@ -29,22 +30,20 @@ const ChatScreen = () => {
             const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDo0NUkRMYfqvdJWrCn0Ty5LU8NAXHW4tw", {
                 method: "POST",
                 body: JSON.stringify({
-                    "contents": [{
-                        "parts": [{ "text": newMessage.text }]
-                    }]
+                    "contents": [{ "parts": [{ "text": newMessage.text }] }]
                 })
             });
 
             const data: APIResponse = await response.json();
             const aiMessage: Message = {
-              idts: Date.now().toString(), // Genera un ID único basado en el tiempo
+              idts: Date.now().toString(),
               text: data?.candidates[0]?.content?.parts[0]?.text || "No response",
               sender: "bot",
-              fecha: new Date().toISOString(), // Fecha en formato ISO
-              emisor: "AI",  // Nombre del emisor
-              message: data?.candidates[0]?.content?.parts[0]?.text || "No response", // Si es redundante, considera eliminarlo de la interfaz
+              fecha: new Date().toISOString(),
+              emisor: "AI",
+              message: data?.candidates[0]?.content?.parts[0]?.text || "No response",
           };
-          
+
             setMessages(prevMessages => [...prevMessages, aiMessage]);
         } catch (error) {
             console.log("Error:", error);
@@ -62,6 +61,7 @@ const ChatScreen = () => {
                 </TouchableOpacity>
                 <Image source={require("../assets/images/Vector.png")} style={styles.logo} />
             </View>
+
 
             {/* Área de chat */}
             <FlatList
@@ -108,6 +108,19 @@ const styles = StyleSheet.create({
     },
     icon: { tintColor: "#FFFFFF", resizeMode: "contain" },
     logo: { width: 30, height: 30, tintColor: "#FFFFFF" },
+    newConversationButton: {
+        backgroundColor: "#4CAF50",
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        alignSelf: "center",
+        marginBottom: 10,
+    },
+    newConversationText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
     messageBubble: {
         maxWidth: "80%",
         padding: 10,
