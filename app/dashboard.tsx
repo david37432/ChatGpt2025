@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../utils/FirebaseConfig"; // Asegúrate de importar correctamente tu configuración de Firebase
+import { db } from "../utils/FirebaseConfig";
+import { saveConversation } from "../utils/saveConversation"; // Asegúrate de importar la función correctamente
 
 interface Conversation {
   id: string;
@@ -14,27 +15,34 @@ const Dashboard: React.FC = () => {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
-  useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "conversations")); // Nombre de la colección en Firestore
-        const data: Conversation[] = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Conversation[];
-        setConversations(data);
-      } catch (error) {
-        console.error("Error fetching conversations:", error);
-      }
-    };
+  const fetchConversations = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "conversations"));
+      const data: Conversation[] = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Conversation[];
+      setConversations(data);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+    }
+  };
 
+  useEffect(() => {
     fetchConversations();
   }, []);
+
+  const handleNewChat = async () => {
+    const title = "Nuevo Chat"; // Puedes cambiar esto por el título que desees
+    const messages = ["Mensaje de ejemplo"]; // Puedes cambiar esto por los mensajes reales
+    await saveConversation(title, messages);
+    fetchConversations(); // Actualiza el historial después de guardar la nueva conversación
+  };
 
   return (
     <View style={styles.container}>
       {/* Encabezado */}
-      <TouchableOpacity style={styles.header} onPress={() => router.push("/empyConversation")}>
+      <TouchableOpacity style={styles.header} onPress={handleNewChat}>
         <Image source={require("../assets/images/mensaje.png")} style={styles.chatIcon} />
         <Text style={styles.headerText}>New Chat</Text>
         <Image source={require("../assets/images/ir2.png")} style={styles.arrowIcon} />
@@ -47,7 +55,7 @@ const Dashboard: React.FC = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.historyItem}
-            onPress={() => router.push({ pathname: `/conversation/${item.id}`, params: { messages: JSON.stringify(item.messages) } })}
+            onPress={() => router.push({ pathname: `/empyConversation`, params: { id: item.id, messages: JSON.stringify(item.messages) } })}
           >
             <Text style={styles.historyText}>{item.title}</Text>
           </TouchableOpacity>
